@@ -7,9 +7,9 @@ function App() {
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const API = "http://localhost:5000/api/items"; // backend URL
+  const API = "http://localhost:5000/api/items"; // Backend URL
 
-  // Fetch items from backend
+  // Fetch items from Backend
   const fetchItems = async () => {
     try {
       setLoading(true);
