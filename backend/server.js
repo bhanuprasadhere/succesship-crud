@@ -1,17 +1,20 @@
+// Load environment variables from .env
+require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
 const app = express();
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
 // MongoDB connection
-mongoose.connect("mongodb+srv://bhanuprasas007_db_user:6kvrMdinOPX7Fade@cluster0.tfpiepx.mongodb.net/", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => console.log("✅ MongoDB Connected"))
-    .catch(err => console.log(err));
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log("✅ MongoDB Connected"))
+    .catch(err => console.error("❌ MongoDB connection error:", err));
 
 // Schema
 const ItemSchema = new mongoose.Schema({
@@ -22,26 +25,53 @@ const ItemSchema = new mongoose.Schema({
 const Item = mongoose.model("Item", ItemSchema);
 
 // Routes
-app.get("/items", async (req, res) => {
-    const items = await Item.find();
-    res.json(items);
+
+// Get all items
+app.get("/api/items", async (req, res) => {
+    try {
+        const items = await Item.find();
+        res.json(items);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.post("/items", async (req, res) => {
-    const newItem = new Item(req.body);
-    await newItem.save();
-    res.json(newItem);
+// Add new item
+app.post("/api/items", async (req, res) => {
+    try {
+        const newItem = new Item(req.body);
+        await newItem.save();
+        res.json(newItem);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.put("/items/:id", async (req, res) => {
-    const updated = await Item.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json(updated);
+// Update item
+app.put("/api/items/:id", async (req, res) => {
+    try {
+        const updated = await Item.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(updated);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.delete("/items/:id", async (req, res) => {
-    await Item.findByIdAndDelete(req.params.id);
-    res.json({ message: "Item deleted" });
+// Delete item
+app.delete("/api/items/:id", async (req, res) => {
+    try {
+        await Item.findByIdAndDelete(req.params.id);
+        res.json({ message: "Item deleted" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Test route
+app.get("/", (req, res) => {
+    res.json({ status: "ok", message: "Succesship CRUD Backend is running" });
 });
 
 // Start server
-app.listen(5000, () => console.log("🚀 Server running on http://localhost:5000"));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Succesship CRUD Test</title>
+</head>
+
+<body>
+    <h1>Succesship CRUD Test</h1>
+
+    <h2>Add / Update Item</h2>
+    Name: <input id="name" type="text"><br>
+    Email: <input id="email" type="text"><br>
+    ID (for update): <input id="item-id" type="text" placeholder="Leave blank to add"><br>
+    <button onclick="saveItem()">Save</button>
+
+    <h2>All Items</h2>
+    <button onclick="getItems()">Refresh List</button>
+    <ul id="item-list"></ul>
+
+    <script>
+        const API = "http://localhost:5000/api/items";
+
+        // Get all items
+        async function getItems() {
+            const res = await fetch(API);
+            const items = await res.json();
+            const list = document.getElementById("item-list");
+            list.innerHTML = "";
+
+            items.forEach(item => {
+                const li = document.createElement("li");
+                li.textContent = `${item.name} (${item.email}) - ID: ${item._id}`;
+
+                // Delete button
+                const delBtn = document.createElement("button");
+                delBtn.textContent = "Delete";
+                delBtn.style.marginLeft = "10px";
+                delBtn.onclick = () => deleteItem(item._id);
+
+                // Edit button
+                const editBtn = document.createElement("button");
+                editBtn.textContent = "Edit";
+                editBtn.style.marginLeft = "5px";
+                editBtn.onclick = () => {
+                    document.getElementById("name").value = item.name;
+                    document.getElementById("email").value = item.email;
+                    document.getElementById("item-id").value = item._id;
+                };
+
+                li.appendChild(editBtn);
+                li.appendChild(delBtn);
+                list.appendChild(li);
+            });
+        }
+
+        // Add or Update item
+        async function saveItem() {
+            const id = document.getElementById("item-id").value;
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+
+            if (!name || !email) return alert("Enter both name and email");
+
+            if (id) {
+                // Update
+                const res = await fetch(`${API}/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email })
+                });
+                const data = await res.json();
+                alert("Updated: " + data.name);
+            } else {
+                // Add
+                const res = await fetch(API, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email })
+                });
+                const data = await res.json();
+                alert("Added: " + data.name);
+            }
+
+            // Clear inputs
+            document.getElementById("name").value = "";
+            document.getElementById("email").value = "";
+            document.getElementById("item-id").value = "";
+
+            getItems(); // refresh list
+        }
+
+        // Delete item
+        async function deleteItem(id) {
+            if (!confirm("Are you sure you want to delete?")) return;
+            await fetch(`${API}/${id}`, { method: "DELETE" });
+            alert("Deleted!");
+            getItems();
+        }
+
+        // Initial load
+        getItems();
+    </script>
+</body>
+
+</html>
